@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Fruit Shop Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --ink:#0E2A1E; --leaf:#12935A; --leaf-soft:#E3F6EA; --lime:#8CF2B0;
+    --mango:#FFB020; --mango-soft:#FFF1D6; --berry:#E5484D; --rose:#FF9A9A;
+    --bg:#F1F5EF; --card:#fff; --line:#E2EAE0; --muted:#6B7B70;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink);
+         font-family:'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+         font-variant-numeric: tabular-nums; }
+  .wrap { max-width:880px; margin:0 auto; padding:16px 16px 64px; }
+  :focus-visible { outline:3px solid var(--mango); outline-offset:2px; }
+
+  /* ---- Hero: the one bold element ---- */
+  .hero { background:var(--ink); color:#E9F5EC; border-radius:22px; padding:22px 24px 24px; }
+  .hero-top { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+  .brand { font-weight:700; font-size:16px; letter-spacing:.2px; }
+  .brand span { opacity:.6; font-weight:500; }
+  .pills { display:inline-flex; background:rgba(255,255,255,.09); border-radius:999px; padding:4px; }
+  .pills button { border:none; background:none; color:#C9DDD0; font:inherit; font-size:13px; font-weight:600;
+                  padding:7px 14px; border-radius:999px; cursor:pointer; }
+  .pills button.active { background:#fff; color:var(--ink); }
+  .big-label { margin-top:22px; font-size:14px; color:#A9C4B3; font-weight:500; }
+  .big { font-size:clamp(44px, 11vw, 68px); font-weight:800; line-height:1.05; letter-spacing:-1.5px; color:var(--lime); }
+  .big.loss { color:var(--rose); }
+  .stats { display:flex; gap:28px; margin-top:16px; flex-wrap:wrap; }
+  .stats div span { display:block; font-size:12px; color:#A9C4B3; font-weight:500; }
+  .stats div b { font-size:19px; font-weight:700; }
+
+  /* ---- Cards ---- */
+  .card { background:var(--card); border:1px solid var(--line); border-radius:18px; padding:18px; margin-top:16px; }
+  .card h2 { margin:0 0 12px; font-size:16px; font-weight:700; }
+  .two { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .two .card { margin-top:16px; min-width:0; }
+  @media (max-width:720px) { .two { grid-template-columns:1fr; } }
+
+  /* ---- Entry ---- */
+  .voice { display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+  #mic { width:72px; height:72px; border-radius:50%; border:none; background:var(--leaf); color:#fff; font-size:28px;
+         cursor:pointer; box-shadow:0 0 0 8px rgba(18,147,90,.14); transition:transform .15s; }
+  #mic:hover { transform:scale(1.05); }
+  #mic.on { background:var(--berry); box-shadow:0 0 0 8px rgba(229,72,77,.18); animation:pulse 1s infinite; }
+  @keyframes pulse { 50% { transform:scale(1.08); } }
+  @media (prefers-reduced-motion:reduce) { #mic.on { animation:none; } }
+  .hint { font-size:13px; color:var(--muted); }
+  #heard { margin-top:4px; font-size:14px; font-weight:600; }
+  select, input { font:inherit; font-size:15px; padding:11px 13px; border:1.5px solid var(--line); border-radius:12px; background:#fff; color:var(--ink); width:100%; }
+  input:focus, select:focus { border-color:var(--leaf); outline:none; }
+  input[readonly] { background:var(--bg); font-weight:700; }
+  label { display:block; font-size:12px; color:var(--muted); font-weight:600; margin-bottom:5px; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:16px; }
+  .full { grid-column:1 / -1; }
+  .seg { display:flex; background:var(--bg); border-radius:12px; padding:4px; gap:4px; }
+  .seg button { flex:1; padding:10px; border:none; border-radius:9px; background:none; font:inherit; font-weight:600; color:var(--muted); cursor:pointer; }
+  .seg button.active { background:#fff; color:var(--ink); box-shadow:0 1px 3px rgba(14,42,30,.12); }
+  #kBuy.active { color:#8A5A00; }
+  .primary { width:100%; height:52px; margin-top:16px; border:none; border-radius:14px; background:var(--leaf); color:#fff;
+             font:inherit; font-weight:700; font-size:16px; cursor:pointer; }
+  .primary:hover { background:#0E7E4C; }
+  #status { min-height:20px; font-size:14px; margin-top:10px; color:var(--muted); font-weight:500; }
+  #status.err { color:var(--berry); }
+
+  /* ---- Tables ---- */
+  .scroll { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  th, td { text-align:left; padding:10px 6px; border-bottom:1px solid var(--line); white-space:nowrap; }
+  th { color:var(--muted); font-weight:600; font-size:12px; }
+  tr:last-child td { border-bottom:none; }
+  .pos { color:var(--leaf); font-weight:700; } .neg { color:var(--berry); font-weight:700; }
+  .badge { display:inline-block; font-size:12px; font-weight:700; padding:3px 10px; border-radius:999px; }
+  .badge.sale { background:var(--leaf-soft); color:#0B6B40; } .badge.purchase { background:var(--mango-soft); color:#8A5A00; }
+  .del { background:none; border:none; color:#B7C2BA; cursor:pointer; font-size:16px; padding:4px 8px; border-radius:8px; }
+  .del:hover { color:var(--berry); background:#FDECEC; }
+  .row { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; gap:10px; flex-wrap:wrap; }
+  .row h2 { margin:0; }
+  a.btn { text-decoration:none; padding:9px 16px; background:var(--ink); color:#fff; border-radius:999px; font-size:13px; font-weight:600; }
+  .note { font-size:12px; color:var(--muted); margin:12px 0 0; line-height:1.5; }
+  .empty { color:var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Hero -->
+  <section class="hero" aria-label="Summary">
+    <div class="hero-top">
+      <div class="brand">🍊 Fruit Shop <span>Ledger</span></div>
+      <div class="pills" role="group" aria-label="Period">
+        <button data-p="today" class="active">Today</button>
+        <button data-p="month">This month</button>
+        <button data-p="all">All time</button>
+      </div>
+    </div>
+    <div class="big-label" id="tPLabel">Today's profit</div>
+    <div class="big" id="tProfit">₹0</div>
+    <div class="stats">
+      <div><span>Sales</span><b id="tSales">₹0</b></div>
+      <div><span>Bought</span><b id="tBuys">₹0</b></div>
+    </div>
+  </section>
+
+  <!-- New entry -->
+  <section class="card" aria-label="New entry">
+    <h2>New entry</h2>
+    <div class="voice">
+      <button id="mic" aria-label="Speak an entry">🎤</button>
+      <div style="width:130px">
+        <label for="lang">Language</label>
+        <select id="lang">
+          <option value="en-IN">English</option>
+          <option value="hi-IN">Hindi</option>
+          <option value="te-IN">Telugu</option>
+        </select>
+      </div>
+      <div style="flex:1;min-width:200px">
+        <div class="hint">Try: "Sold 10 kg bananas to Hotel 2 at 40 per kg"</div>
+        <div id="heard"></div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="full seg">
+        <button type="button" id="kSale" class="active">Sale</button>
+        <button type="button" id="kBuy">Purchase</button>
+      </div>
+      <div class="full">
+        <label for="place">Customer / place (for a purchase: supplier)</label>
+        <input id="place" list="places" placeholder="e.g. Hotel 1" />
+        <datalist id="places"></datalist>
+      </div>
+      <div class="full"><label for="fruit">Fruit</label><input id="fruit" placeholder="e.g. Apple" /></div>
+      <div><label for="qty">Quantity</label><input id="qty" type="number" step="any" min="0" /></div>
+      <div><label for="unit">Unit</label>
+        <select id="unit"><option>kg</option><option>dozen</option><option>piece</option></select></div>
+      <div><label for="price">Price per unit (₹)</label><input id="price" type="number" step="any" min="0" /></div>
+      <div><label for="total">Total (₹)</label><input id="total" readonly /></div>
+      <div class="full"><label for="note">Note (optional)</label><input id="note" /></div>
+    </div>
+    <button class="primary" id="save">Save entry</button>
+    <div id="status" role="status"></div>
+  </section>
+
+  <!-- Reports -->
+  <div class="two">
+    <section class="card" aria-label="By fruit">
+      <h2>By fruit</h2>
+      <div class="scroll"><table>
+        <thead><tr><th>Fruit</th><th>Sold</th><th>Profit</th><th>Stock</th></tr></thead>
+        <tbody id="fruitRows"></tbody>
+      </table></div>
+    </section>
+    <section class="card" aria-label="By customer">
+      <h2>By customer / place</h2>
+      <div class="scroll"><table>
+        <thead><tr><th>Place</th><th>Sales</th><th>Profit</th></tr></thead>
+        <tbody id="placeRows"></tbody>
+      </table></div>
+    </section>
+  </div>
+  <p class="note">Profit = sales − (your average buying price × quantity sold). A "?" means no purchase is recorded
+    for that fruit yet. Add a Purchase entry for it so its profit can be worked out.</p>
+
+  <!-- Recent -->
+  <section class="card" aria-label="Recent entries">
+    <div class="row"><h2>Recent entries</h2><a class="btn" href="/export">Download Excel</a></div>
+    <div class="scroll"><table>
+      <thead><tr><th>Date</th><th>Type</th><th>Place</th><th>Fruit</th><th>Qty</th><th>Price</th><th>Total</th><th></th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table></div>
+  </section>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let kind = "sale", period = "today";
+
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const money = (n) => "₹" + Number(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 });
+const sign = (n) => (n < 0 ? "neg" : "pos");
+const EMOJI = { apple:"🍎", banana:"🍌", mango:"🥭", grape:"🍇", orange:"🍊", watermelon:"🍉", pineapple:"🍍",
+  coconut:"🥥", strawberr:"🍓", pear:"🍐", lemon:"🍋", kiwi:"🥝", peach:"🍑", cherr:"🍒", papaya:"🧡",
+  pomegranate:"🍎", guava:"🍐", melon:"🍈" };
+function fruitIcon(name) {
+  const n = String(name || "").toLowerCase();
+  for (const k in EMOJI) if (n.includes(k)) return EMOJI[k] + " ";
+  return "🍴 ";
+}
+function status(msg, err = false) { $("status").textContent = msg; $("status").className = err ? "err" : ""; }
+function setKind(k) {
+  kind = k;
+  $("kSale").classList.toggle("active", k === "sale");
+  $("kBuy").classList.toggle("active", k === "purchase");
+}
+function updateTotal() {
+  const t = (parseFloat($("qty").value) || 0) * (parseFloat($("price").value) || 0);
+  $("total").value = t ? t.toFixed(2) : "";
+}
+$("kSale").onclick = () => setKind("sale");
+$("kBuy").onclick = () => setKind("purchase");
+$("qty").oninput = updateTotal;
+$("price").oninput = updateTotal;
+document.querySelectorAll("[data-p]").forEach((b) => (b.onclick = () => {
+  period = b.dataset.p;
+  document.querySelectorAll("[data-p]").forEach((x) => x.classList.toggle("active", x === b));
+  load();
+}));
+
+// ---------- Voice ----------
+$("mic").onclick = () => {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return status("Voice needs Chrome or Edge. You can still type.", true);
+  const rec = new SR();
+  rec.lang = $("lang").value;
+  rec.interimResults = false;
+  rec.onstart = () => { $("mic").classList.add("on"); status("Listening..."); };
+  rec.onend = () => $("mic").classList.remove("on");
+  rec.onerror = () => status("Could not hear anything. Try again or type.", true);
+  rec.onresult = async (e) => {
+    const text = e.results[0][0].transcript;
+    $("heard").textContent = `Heard: "${text}"`;
+    status("Understanding...");
+    try {
+      const res = await fetch("/parse", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }) });
+      if (!res.ok) throw new Error((await res.json()).detail);
+      const d = await res.json();
+      setKind(d.kind === "purchase" ? "purchase" : "sale");
+      if (d.place) $("place").value = d.place;
+      if (d.fruit) $("fruit").value = d.fruit;
+      if (d.qty != null) $("qty").value = d.qty;
+      if (d.unit) $("unit").value = d.unit;
+      if (d.price != null) $("price").value = d.price;
+      if (d.note) $("note").value = d.note;
+      updateTotal();
+      status("Check the details, then press Save.");
+    } catch (err) { status(err.message || "Could not understand. Please type it.", true); }
+  };
+  rec.start();
+};
+
+// ---------- Save / delete ----------
+$("save").onclick = async () => {
+  const fruit = $("fruit").value.trim();
+  const qty = parseFloat($("qty").value), price = parseFloat($("price").value);
+  if (!fruit || !(qty > 0) || !(price >= 0)) return status("Please fill fruit, quantity and price.", true);
+  try {
+    const res = await fetch("/entries", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ kind, fruit, qty, unit: $("unit").value, price, place: $("place").value, note: $("note").value }) });
+    if (!res.ok) throw new Error();
+    // keep place and type, so several fruits for one hotel are quick to enter
+    ["fruit", "qty", "price", "total", "note"].forEach((i) => ($(i).value = ""));
+    $("heard").textContent = "";
+    status("Saved.");
+    load();
+  } catch { status("Could not save. Is the server running?", true); }
+};
+
+async function del(id) {
+  if (!confirm("Delete this entry?")) return;
+  await fetch(`/entries/${id}`, { method: "DELETE" });
+  load();
+}
+window.del = del;
+
+// ---------- Load everything ----------
+async function load() {
+  try {
+    const [e, r] = await Promise.all([
+      fetch("/entries").then((x) => x.json()),
+      fetch("/report?period=" + period).then((x) => x.json()),
+    ]);
+
+    $("places").innerHTML = e.places.map((p) => `<option value="${esc(p)}">`).join("");
+
+    const name = { today: "Today's", month: "This month's", all: "All-time" }[period];
+    $("tPLabel").textContent = `${name} ${r.profit < 0 ? "loss" : "profit"}`;
+    $("tProfit").textContent = money(Math.abs(r.profit));
+    $("tProfit").className = "big" + (r.profit < 0 ? " loss" : "");
+    $("tSales").textContent = money(r.sales);
+    $("tBuys").textContent = money(r.purchases);
+
+    $("fruitRows").innerHTML = r.by_fruit.map((f) =>
+      `<tr><td>${fruitIcon(f.fruit)}${esc(f.fruit)}</td><td>${esc(f.sold)} ${esc(f.unit)}</td>
+       <td class="${f.profit == null ? "" : sign(f.profit)}">${f.profit == null ? "?" : money(f.profit)}</td>
+       <td class="${f.stock < 0 ? "neg" : ""}">${esc(f.stock)} ${esc(f.unit)}</td></tr>`).join("")
+      || `<tr><td colspan="4" class="empty">No sales in this period.</td></tr>`;
+
+    $("placeRows").innerHTML = r.by_place.map((p) =>
+      `<tr><td>${esc(p.place)}</td><td>${money(p.revenue)}</td><td class="${sign(p.profit)}">${money(p.profit)}</td></tr>`).join("")
+      || `<tr><td colspan="3" class="empty">No sales in this period.</td></tr>`;
+
+    $("rows").innerHTML = e.entries.map((x) =>
+      `<tr><td>${esc(x.day)}</td><td><span class="badge ${esc(x.kind)}">${esc(x.kind)}</span></td><td>${esc(x.place)}</td>
+       <td>${fruitIcon(x.fruit)}${esc(x.fruit)}</td><td>${esc(x.qty)} ${esc(x.unit)}</td><td>${money(x.price)}</td><td>${money(x.total)}</td>
+       <td><button class="del" aria-label="Delete entry" onclick="del(${Number(x.id)})">✕</button></td></tr>`).join("")
+      || `<tr><td colspan="8" class="empty">No entries yet.</td></tr>`;
+  } catch { status("Cannot reach the server.", true); }
+}
+load();
+</script>
+</body>
+</html>
